@@ -55,10 +55,10 @@ def split_nodes_delimiter(old_nodes: TextNode|dict, delimiter:str, text_type:Tex
 def extract_markdown_images(text:str):
     return re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
 
-def split_nodes_images(old_nodes):
+def split_nodes_base(old_nodes, node_type:TextType):
     new_nodes = []
     return_list = []
-    img_node = lambda _tuple: TextNode(_tuple[0], TextType.IMAGE, _tuple[1])
+    return_node_type = lambda _tuple: TextNode(_tuple[0], node_type, _tuple[1])
 
     if type(old_nodes) == TextNode:
         new_nodes.append(old_nodes)
@@ -66,14 +66,27 @@ def split_nodes_images(old_nodes):
         new_nodes.extend(old_nodes)
 
     for node in new_nodes:
-        extracted_nodes = extract_markdown_images(node.text)
+        extracted_nodes = []
+        if node_type == TextType.IMAGE:
+            extracted_nodes = extract_markdown_images(node.text)
+        elif node_type == TextType.LINK:
+            extracted_nodes = extract_markdown_links(node.text)
+        else:
+            raise Exception("not supported type")
+        
         if not extracted_nodes:
             return_list.append(node)
             continue
         
         cur_text = node.text
         for e_nodes in extracted_nodes:
-            delimiter = f"![{e_nodes[0]}]({e_nodes[1]})"
+            delimiter = ""
+            
+            if node_type == TextType.IMAGE:
+                delimiter += "!"
+
+            delimiter += f"[{e_nodes[0]}]({e_nodes[1]})"
+
             ss = cur_text.split(delimiter,1)
 
             #there are 3 cases only
@@ -81,14 +94,14 @@ def split_nodes_images(old_nodes):
             # ![rick roll](https://i.imgur.com/aKaOqIh.gif)
             # result = "" + extracted + ""
             if not ss[0] and not ss[1]:
-                return_list.append(img_node(e_nodes))
+                return_list.append(return_node_type(e_nodes))
                 continue
 
             #case 2
             # ![rick roll](https://i.imgur.com/aKaOqIh.gif) and
             # result = "" + extracted + reminder text
             if not ss[0]:
-                return_list.append(img_node(e_nodes))
+                return_list.append(return_node_type(e_nodes))
                 cur_text = ss[1]
                 continue
             
@@ -97,14 +110,17 @@ def split_nodes_images(old_nodes):
             # results = text + extracted + ""
 
             return_list.append(TextNode(ss[0], TextType.TEXT))
-            return_list.append(img_node(e_nodes))
+            return_list.append(return_node_type(e_nodes))
             cur_text = ss[1]
 
     return return_list
 
+
+def split_nodes_images(old_nodes):
+    return split_nodes_base(old_nodes, TextType.IMAGE)
+
 def extract_markdown_links(text):
     return re.findall(r"(?<!!)\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
    
-
 def split_nodes_link(old_nodes):
-    pass
+    return split_nodes_base(old_nodes, TextType.LINK)

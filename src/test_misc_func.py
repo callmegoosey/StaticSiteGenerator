@@ -109,6 +109,17 @@ class TestMiscFunc(unittest.TestCase):
         node = TextNode (text, TextType.TEXT)
         self.assertEqual(split_nodes_images([node]), output)
 
+    def test_split_nodes_links(self):
+        text =      "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        output =    [
+                    TextNode("This is text with a link ", TextType.TEXT),
+                    TextNode("to boot dev", TextType.LINK, "https://www.boot.dev"),
+                    TextNode(" and ", TextType.TEXT),
+                    TextNode("to youtube", TextType.LINK, "https://www.youtube.com/@bootdotdev"),
+                    ]
+              
+        node = TextNode (text, TextType.TEXT)
+        self.assertEqual(split_nodes_link([node]), output)
 
 
         
