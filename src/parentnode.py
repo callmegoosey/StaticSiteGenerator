@@ -12,8 +12,9 @@ class ParentNode(HTMLNode):
         if self.children is None:
             raise ValueError("children is None")
         
-        child_list = []
+        child_list = ""
         for child in self.children:
-            child_list.append(child.to_html())
+            child_list += child.to_html()
 
-        return f"<{self.tag}>{"".join(child_list)}</{self.tag}>"
+        return f"<{self.tag}>{child_list}</{self.tag}>"
+    

@@ -5,20 +5,20 @@ import re
 def text_node_to_html_node(text_node: TextNode):
     match(text_node.text_type):
         case TextType.TEXT:
-            return LeafNode(None, text_node.text).to_html()
+            return LeafNode(None, text_node.text)
         case TextType.BOLD:
-            return LeafNode("b", text_node.text).to_html()
+            return LeafNode("b", text_node.text)
         case TextType.ITALIC:
-            return LeafNode("i", text_node.text).to_html()
+            return LeafNode("i", text_node.text)
         case TextType.CODE:
-            return LeafNode("code", text_node.text).to_html()
+            return LeafNode("code", text_node.text)
         case TextType.LINK:
-            return LeafNode("a", text_node.text, {"href":text_node.url}).to_html()
+            return LeafNode("a", text_node.text, {"href":text_node.url})
         case TextType.IMAGE:
             prop = {}
             prop.update({"src":text_node.url})
             prop.update({"alt":text_node.text})
-            return LeafNode("img", "", prop).to_html()
+            return LeafNode("img", "", prop)
 
         case _:
             raise Exception(f"TextType is not supported: {text_node.text_type}")
@@ -43,6 +43,10 @@ def split_nodes_delimiter(old_nodes: TextNode|dict, delimiter:str, text_type:Tex
             return_list.append(node)
         else:
             string_split = node.text.split(delimiter, 2)
+
+            if len(string_split) == 1:
+                return_list.append(TextNode(string_split[0], TextType.TEXT))
+                continue
 
             return_list.append(TextNode(string_split[0], TextType.TEXT))
             return_list.append(TextNode(string_split[1],text_type))
@@ -112,8 +116,8 @@ def split_nodes_base(old_nodes, node_type:TextType):
             return_list.append(return_node_type(e_nodes))
             cur_text = ss[1]
 
-    if cur_text:
-        return_list.append(TextNode(cur_text, TextType.TEXT))
+        if cur_text:
+            return_list.append(TextNode(cur_text, TextType.TEXT))
 
     return return_list
 
@@ -134,42 +138,71 @@ def text_to_textnodes(text):
 
     while input_str:
         # check for **(bold)
-        node = split_nodes_delimiter(node, "**", TextType.BOLD)
-        last_node = node.pop()
-        input_str = last_node.text
-        return_list.extend(node)
-        node = last_node
-
-        # check for *(italic)
-        node = split_nodes_delimiter(node, "*", TextType.ITALIC)
-        last_node = node.pop()
-        input_str = last_node.text
-        return_list.extend(node)
-        node = last_node
-
-        # check for `(code)
-        node = split_nodes_delimiter(node, "`", TextType.CODE)
-        last_node = node.pop()
-        input_str = last_node.text
-        return_list.extend(node)
-        node = last_node
-
-        # check for image
-        node = split_nodes_images(node)
-        last_node = node.pop()
-        input_str = last_node.text
-        return_list.extend(node)
-        node = last_node
-
-        # check for link
-        node = split_nodes_link(node)
-        if len(node) > 2:
+        if "**" in input_str:
+            node = split_nodes_delimiter(node, "**", TextType.BOLD)
+            if len(node) <= 2:
+                return_list.extend(node)
+                return return_list
+            
             last_node = node.pop()
             input_str = last_node.text
-        else:
-            input_str = ""
+            return_list.extend(node)
+            node = last_node
 
-        return_list.extend(node)
-        node = last_node
+        # check for *(italic)
+        if "*" in input_str:
+            node = split_nodes_delimiter(node, "*", TextType.ITALIC)
+            if len(node) <= 2:
+                return_list.extend(node)
+                return return_list
+            
+            last_node = node.pop()
+            input_str = last_node.text
+            return_list.extend(node)
+            node = last_node
+
+        # check for `(code)
+        if "`" in input_str:
+            node = split_nodes_delimiter(node, "`", TextType.CODE)
+            for n_ in node:
+                if n_.text == "":
+                    del n_
+            if len(node) <= 2:
+                return_list.extend(node)
+                return return_list
+            
+            last_node = node.pop()
+            input_str = last_node.text
+            return_list.extend(node)
+            node = last_node
+
+        # check for image
+        if len(extract_markdown_images(input_str)):
+            node = split_nodes_images(node)
+            if len(node) <= 2:
+                return_list.extend(node)
+                return return_list
+            
+            last_node = node.pop()
+            input_str = last_node.text
+            return_list.extend(node)
+            node = last_node
+
+        # check for link
+        if len(extract_markdown_links(input_str)):
+            node = split_nodes_link(node)
+            if len(node) <= 2:
+                return_list.extend(node)
+                return return_list
+            
+            
+            last_node = node.pop()
+            input_str = last_node.text
+            return_list.extend(node)
+            node = last_node
+
+        if type(node) == TextNode:
+            return_list.extend([node])
+            return return_list
     
     return return_list

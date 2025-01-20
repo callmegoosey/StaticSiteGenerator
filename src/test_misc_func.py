@@ -12,31 +12,31 @@ class TestMiscFunc(unittest.TestCase):
         text = "this is raw text"
         textnode = TextNode(text, TextType.TEXT)
         leafnode = LeafNode(None, text)
-        self.assertEqual(text_node_to_html_node(textnode),leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(),leafnode.to_html())
 
     def test_text_node_to_html_node_bold(self):
         text = "this is bold text"
         textnode = TextNode(text, TextType.BOLD)
         leafnode = LeafNode("b", text)
-        self.assertEqual(text_node_to_html_node(textnode),leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(),leafnode.to_html())
 
     def test_text_node_to_html_node_ITALIC(self):
         text = "this is ITALIC text"
         textnode = TextNode(text, TextType.ITALIC)
         leafnode = LeafNode("i", text)
-        self.assertEqual(text_node_to_html_node(textnode),leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(),leafnode.to_html())
 
     def test_text_node_to_html_node_CODE(self):
         text = "this is CODE"
         textnode = TextNode(text, TextType.CODE)
         leafnode = LeafNode("code", text)
-        self.assertEqual(text_node_to_html_node(textnode),leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(),leafnode.to_html())
 
     def test_text_node_to_html_node_LINK(self):
         text = "this is a LINK"
         textnode = TextNode(text, TextType.LINK, "https://www.google.com")
         leafnode = LeafNode("a", text, {"href": "https://www.google.com"})
-        self.assertEqual(text_node_to_html_node(textnode), leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(), leafnode.to_html())
 
     def test_text_node_to_html_node_IMAGE(self):
         text = "this is an IMAGE"
@@ -46,7 +46,7 @@ class TestMiscFunc(unittest.TestCase):
                                             "alt": "this is an IMAGE"
                                         })
         
-        self.assertEqual(text_node_to_html_node(textnode), leafnode.to_html())
+        self.assertEqual(text_node_to_html_node(textnode).to_html(), leafnode.to_html())
 
 
     # def test_split_node_no_closing_delimiter(self):
@@ -137,7 +137,8 @@ class TestMiscFunc(unittest.TestCase):
                         TextNode(" and a ", TextType.TEXT),
                         TextNode("link", TextType.LINK, "https://boot.dev"),
                     ]
-        self.assertEqual(text_to_textnodes(text), output)
-        
+        a = text_to_textnodes(text)
+        self.assertEqual(a, output)
+
 if __name__ == "__main__":
     unittest.main()

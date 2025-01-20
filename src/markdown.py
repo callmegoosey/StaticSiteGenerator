@@ -1,5 +1,7 @@
 from enum import Enum
 from parentnode import ParentNode
+from textnode import TextNode, TextType
+from misc_func import text_node_to_html_node, text_to_textnodes
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -13,8 +15,14 @@ class BlockType(Enum):
 def markdown_to_blocks(markdown):
 
     ss = markdown.split("\n\n")
-    a = list(map(lambda x: x.strip(), ss))
-    return a
+    return_list = []
+    
+    for s in ss:
+        if s == "":
+            continue
+        return_list.append(s.strip())
+        
+    return return_list
 
 def block_to_block_type(block:str):
 
@@ -65,21 +73,108 @@ def block_to_block_type(block:str):
 
 def block_to_html_node(block):
     blocktype = block_to_block_type(block)
+
     match(blocktype):
         case BlockType.PARAGRAPH:
-            pass
+            lines = block.split("\n")
+            textnodes = text_to_textnodes(" ".join(lines))
+            return block_to_paragraph_html_node(textnodes)
         case BlockType.HEADING:
-            pass
+            lines = block.split("\n")
+            textnodes = text_to_textnodes(" ".join(lines))
+            return block_to_heading_HTMLNode(textnodes)
         case BlockType.CODE:
-            pass
+            lines = block.split("\n")
+            return block_to_code_HTMLNode(lines)
         case BlockType.QUOTE:
-            pass
+            return block_to_quote_HTMLNode(block)
         case BlockType.UNORDERED_LIST:
-            pass
+            return block_to_unordered_HTMLNode(block)
         case BlockType.ORDERED_LIST:
-            pass       
+            return block_to_ordered_HTMLNode(block)       
         case _:
             raise Exception("Unsupported block type")
+
+def block_to_ordered_HTMLNode(block):
+    lines = block.split("\n")
+    children = []
+    index = 1
+    for line in lines:
+        if not line.startswith(f"{index}. "):
+            raise Exception("Not a valid ordered list")
+        a = text_to_textnodes(line.strip(f"{index}. "))
+        b = []
+        for node in a:
+            b.append(text_node_to_html_node(node))
+        children.append(ParentNode("li", b))
+        index += 1
+
+    return ParentNode("ol", children)
+
+def block_to_unordered_HTMLNode(block):
+    lines = block.split("\n")
+    children = []
+    for line in lines:
+        if not line.startswith("- "):
+            raise Exception("Not a valid unordered list")
+        a = text_to_textnodes(line.strip("- "))
+        b = []
+        for node in a:
+            b.append(text_node_to_html_node(node))
+        children.append(ParentNode("li", b))
+
+    return ParentNode("ul", children)
+
+def block_to_quote_HTMLNode(blocks):
+    lines = blocks.split("\n")
+
+    newline = []
+    for line in lines:
+        if not line.startswith("> "):
+            raise Exception("Invalid quote line")
+        newline.append(line.strip("> "))
+    
+    r = text_to_textnodes(" ".join(newline))
+
+    children = []
+
+    for child in r:
+        children.append(text_node_to_html_node(child))
+
+    return ParentNode("blockquote", children)
+
+def block_to_code_HTMLNode(blocks):
+    children = []
+    for block in blocks:
+        if not block.startswith("'''") and not block.endswith("```"):
+            raise Exception("No matching ``` at start and end")
+        block = block.strip("```")
+        
+    children.append(text_node_to_html_node(TextNode(block, TextType.CODE)))
+
+    return ParentNode("pre", children)
+
+def block_to_heading_HTMLNode(textnodes):
+    h_count = 0
+    children = []
+
+    for textnode in textnodes:
+        for char in textnode.text:
+            if char == "#":
+                h_count += 1
+        textnode.text = textnode.text.strip("#" * h_count + " ")
+        r = text_node_to_html_node(textnode)
+        children.append(r)
+
+    return ParentNode(f"h{h_count}", children)
+
+def block_to_paragraph_html_node(textnodes:TextNode):
+    children = []
+    for textnode in textnodes:
+        r = text_node_to_html_node(textnode)
+        children.append(r)
+
+    return ParentNode("p", children)
 
 # markdown => blocks => html_node
 def markdown_to_html_node(markdown):
@@ -87,8 +182,8 @@ def markdown_to_html_node(markdown):
     children = []
 
     for block in blocks:
-        blocktype = block_to_html_node(block)
-
-        print()
+        result = block_to_html_node(block)
+        children.append(result)
 
     return ParentNode("div", children, None)
+
