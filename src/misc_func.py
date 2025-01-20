@@ -50,7 +50,8 @@ def split_nodes_delimiter(old_nodes: TextNode|dict, delimiter:str, text_type:Tex
 
             return_list.append(TextNode(string_split[0], TextType.TEXT))
             return_list.append(TextNode(string_split[1],text_type))
-            return_list.append(TextNode(string_split[2], TextType.TEXT))
+            if(len(string_split) > 2):
+                return_list.append(TextNode(string_split[2], TextType.TEXT))
 
     return return_list
 

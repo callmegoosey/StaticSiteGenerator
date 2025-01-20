@@ -84,8 +84,7 @@ def block_to_html_node(block):
             textnodes = text_to_textnodes(" ".join(lines))
             return block_to_heading_HTMLNode(textnodes)
         case BlockType.CODE:
-            lines = block.split("\n")
-            return block_to_code_HTMLNode(lines)
+            return block_to_code_HTMLNode(block)
         case BlockType.QUOTE:
             return block_to_quote_HTMLNode(block)
         case BlockType.UNORDERED_LIST:
@@ -115,9 +114,10 @@ def block_to_unordered_HTMLNode(block):
     lines = block.split("\n")
     children = []
     for line in lines:
-        if not line.startswith("- "):
+        if not line.startswith("- ") and not line.startswith("* "):
             raise Exception("Not a valid unordered list")
-        a = text_to_textnodes(line.strip("- "))
+        marker = line[:2]
+        a = text_to_textnodes(line.strip(marker))
         b = []
         for node in a:
             b.append(text_node_to_html_node(node))
@@ -145,14 +145,15 @@ def block_to_quote_HTMLNode(blocks):
 
 def block_to_code_HTMLNode(blocks):
     children = []
-    for block in blocks:
-        if not block.startswith("'''") and not block.endswith("```"):
-            raise Exception("No matching ``` at start and end")
-        block = block.strip("```")
-        
-    children.append(text_node_to_html_node(TextNode(block, TextType.CODE)))
+    if not blocks.startswith("'''") and not blocks.endswith("```"):
+        raise Exception("No matching ``` at start and end")
+    
+    blocks = blocks.strip("```")
+    textnodes = text_to_textnodes(blocks)
+    for textnode in textnodes:
+        children.append(text_node_to_html_node(textnode))
 
-    return ParentNode("pre", children)
+    return ParentNode("pre", [ParentNode("code", children)])
 
 def block_to_heading_HTMLNode(textnodes):
     h_count = 0
