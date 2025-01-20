@@ -17,20 +17,3 @@ class ParentNode(HTMLNode):
             child_list.append(child.to_html())
 
         return f"<{self.tag}>{"".join(child_list)}</{self.tag}>"
-
-
-# def main():
-#     p = ParentNode(
-#         "p",
-#         [
-#             LeafNode("b", "Bold text"),
-#             LeafNode(None, "Normal text"),
-#             LeafNode("i", "italic text"),
-#             LeafNode(None, "Normal text"),
-#         ],
-#     )
-
-#     print(p.to_html())
-
-# main()
-        

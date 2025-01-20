@@ -42,9 +42,8 @@ def split_nodes_delimiter(old_nodes: TextNode|dict, delimiter:str, text_type:Tex
         if node.text_type != TextType.TEXT:
             return_list.append(node)
         else:
-            string_split = node.text.split(delimiter)
-            if len(string_split) != 3:
-                raise Exception("No matching closing delimiter")
+            string_split = node.text.split(delimiter, 2)
+
             return_list.append(TextNode(string_split[0], TextType.TEXT))
             return_list.append(TextNode(string_split[1],text_type))
             return_list.append(TextNode(string_split[2], TextType.TEXT))
@@ -113,6 +112,9 @@ def split_nodes_base(old_nodes, node_type:TextType):
             return_list.append(return_node_type(e_nodes))
             cur_text = ss[1]
 
+    if cur_text:
+        return_list.append(TextNode(cur_text, TextType.TEXT))
+
     return return_list
 
 
@@ -124,3 +126,50 @@ def extract_markdown_links(text):
    
 def split_nodes_link(old_nodes):
     return split_nodes_base(old_nodes, TextType.LINK)
+
+def text_to_textnodes(text):
+    node = TextNode(text, TextType.TEXT)
+    input_str = text
+    return_list = []
+
+    while input_str:
+        # check for **(bold)
+        node = split_nodes_delimiter(node, "**", TextType.BOLD)
+        last_node = node.pop()
+        input_str = last_node.text
+        return_list.extend(node)
+        node = last_node
+
+        # check for *(italic)
+        node = split_nodes_delimiter(node, "*", TextType.ITALIC)
+        last_node = node.pop()
+        input_str = last_node.text
+        return_list.extend(node)
+        node = last_node
+
+        # check for `(code)
+        node = split_nodes_delimiter(node, "`", TextType.CODE)
+        last_node = node.pop()
+        input_str = last_node.text
+        return_list.extend(node)
+        node = last_node
+
+        # check for image
+        node = split_nodes_images(node)
+        last_node = node.pop()
+        input_str = last_node.text
+        return_list.extend(node)
+        node = last_node
+
+        # check for link
+        node = split_nodes_link(node)
+        if len(node) > 2:
+            last_node = node.pop()
+            input_str = last_node.text
+        else:
+            input_str = ""
+
+        return_list.extend(node)
+        node = last_node
+    
+    return return_list
